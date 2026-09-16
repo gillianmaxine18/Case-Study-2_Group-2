@@ -113,7 +113,7 @@ class DataCleaner:
         )
         return cleaned
 
-    def flag_outliers(self, df: pd.DataFrame, column: str, threshold: float) -> pd.DataFrame:
+        def flag_outliers(self, df: pd.DataFrame, column: str, threshold: float) -> pd.DataFrame:
         """Add a Boolean flag column marking values above a threshold.
 
         Args:
@@ -125,7 +125,15 @@ class DataCleaner:
         Returns:
             A new DataFrame with an added "<column>_outlier_flag" column.
             Row count is unchanged.
+
+        Raises:
+            ValueError: If column is not present in df.
         """
+        if column not in df.columns:
+            raise ValueError(
+                f"flag_outliers: column '{column}' not found in DataFrame. "
+                f"Available columns: {list(df.columns)}"
+            )
         rows_before = len(df)
         flagged = df.copy()
         flag_column = f"{column}_outlier_flag"
