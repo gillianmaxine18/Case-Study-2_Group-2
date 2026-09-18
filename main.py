@@ -38,11 +38,8 @@ from src.validator import (
     enforce_all_passed,
 )
 
-# NOTE: analytics.py currently names its pivot margin "Total_Sum" while
-# visualizer.py looks for "Total" when excluding margins from the heatmap.
-# This constant is the source of truth used here for validation; Kayce
-# still needs to align analytics.py and visualizer.py to use the same
-# label, or the heatmap will keep including the margin row/column.
+# Matches analytics.py's pivot_table(margins_name=...) and visualizer.py's
+# drop key, so the same label is used consistently for validation and plotting.
 PIVOT_MARGIN_LABEL = "Total_Sum"
 
 
