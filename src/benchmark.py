@@ -67,5 +67,18 @@ def calculate_average_value(records: list[dict], default_avg: float = 0.0) -> fl
     return float(total / len(records))
 
 if __name__ == "__main__":
-    # Ensure you provide the correct file path to your dataset
-    run_numpy_comparison("path_to_your_dataset.csv")
+    # Standalone test entry point only. main.py always passes the real
+    # dataset path directly to run_numpy_comparison(), so this block only
+    # matters if someone runs `python src/benchmark.py` on its own.
+    # FIX: replaced the old placeholder "path_to_your_dataset.csv" with the
+    # actual configured path, falling back to a sensible default if config.py
+    # isn't importable from wherever this script is run.
+    try:
+        from config import PIPELINE_CONFIG
+        dataset_path = PIPELINE_CONFIG["input_filepath"]
+    except ImportError:
+        dataset_path = "data/2015.csv"
+        print("Note: could not import config.py (run this from the project root). "
+              f"Falling back to default path: {dataset_path}")
+
+    run_numpy_comparison(dataset_path)
