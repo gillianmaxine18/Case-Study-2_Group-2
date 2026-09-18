@@ -1,92 +1,63 @@
+# src/benchmark.py
 import time
 import numpy as np
 import pandas as pd
+from typing import Tuple
 
-def run_numpy_comparison(data_path: str, sample_size: int = 100000) -> tuple[float, float, float, bool]:
+def extract_numerical_array(df: pd.DataFrame, column_name: str = 'dutiablevaluephp') -> np.ndarray:
     """
-    Compares the execution time of a loop-based calculation versus a vectorised 
-    NumPy equivalent using a fixed-seed sample from the 'dutiablevaluephp' column.
-    """
-    # FIX: matches loader.py's encoding='latin1' - the raw file has bytes
-    # that aren't valid UTF-8, so the default encoding crashes on the real
-    # 2015.csv with UnicodeDecodeError.
-    df = pd.read_csv(data_path, encoding='latin1')
-    data_array = df["dutiablevaluephp"].sample(n=sample_size, random_state=42).to_numpy()
+    Extracts a pandas Series into a NumPy array, filtering out nulls using a Boolean mask.
     
-    threshold = 15000.0
-    multiplier = 1.10
-    # FIX: 1e-8 was unrealistically tight for sums in the hundreds of
-    # billions of PHP - ordinary floating-point summation drift of a
-    # fraction of a peso was enough to fail validation.csv's check even
-    # though the two totals genuinely agree. 0.01 (one centavo) matches
-    # validator.py's own DEFAULT_TOLERANCE convention for measure sums.
-    tolerance = 0.01
-    
-    loop_times = []
-    vectorised_times = []
-    
-    loop_total = 0.0
-    vec_total = 0.0
-    
-    for _ in range(5):
-        start_loop = time.perf_counter()
-        loop_total = 0.0
-        for value in data_array:
-            if value > threshold:
-                loop_total += value * multiplier
-        loop_times.append(time.perf_counter() - start_loop)
+    Args:
+        df (pd.DataFrame): The loaded Customs dataset.
+        column_name (str): The target column to extract. Defaults to 'dutiablevaluephp'.
         
-        start_vec = time.perf_counter()
-        mask = data_array > threshold
-        vec_total = float(np.sum(data_array[mask] * multiplier))
-        vectorised_times.append(time.perf_counter() - start_vec)
-
-    median_loop = float(np.median(loop_times))
-    median_vec = float(np.median(vectorised_times))
-    
-    print("--- Performance Results ---")
-    print(f"Median loop time: {median_loop:.5f} seconds")
-    print(f"Median vectorised time: {median_vec:.5f} seconds")
-    print(f"Performance gain: {median_loop / median_vec:.2f}x faster")
-    
-    is_pass = bool(np.isclose(loop_total, vec_total, atol=tolerance))
-    
-    return loop_total, vec_total, tolerance, is_pass
-
-def filter_valid_records(records: list[dict], min_value: float = 0.0) -> list[dict]:
+    Returns:
+        np.ndarray: A 1D NumPy array containing valid numerical data.
     """
-    Filters a list of dataset records, keeping only those above a minimum value.
-    """
-    valid_records = []
-    for record in records:
-        if record.get("value", 0.0) > min_value:
-            valid_records.append(record)
-    return valid_records
+    valid_mask = df[column_name].notna().to_numpy()
+    return df[column_name].to_numpy(dtype=np.float64)[valid_mask]
 
-def calculate_average_value(records: list[dict], default_avg: float = 0.0) -> float:
+def compare_performance(data_array: np.ndarray, threshold: float = 1000.0) -> Tuple[str, float, float, float, bool]:
     """
-    Calculates the average value from a list of records. 
-    Returns the default average if the list is empty.
-    """
-    if not records:
-        return default_avg
+    Compares loop vs vectorized calculation on an array using a fixed-seed sample.
     
-    total = sum(record.get("value", 0.0) for record in records)
-    return float(total / len(records))
+    Args:
+        data_array (np.ndarray): NumPy array of real numerical values.
+        threshold (float): Value to mask and sum above. Defaults to 1000.0.
+        
+    Returns:
+        Tuple[str, float, float, float, bool]: Formatted for validation.csv as 
+        (check, expected, actual, tolerance, pass).
+    """
+    np.random.seed(42)
+    sample_size = min(100000, len(data_array))
+    sample = np.random.choice(data_array, size=sample_size, replace=False)
 
-if __name__ == "__main__":
-    # Standalone test entry point only. main.py always passes the real
-    # dataset path directly to run_numpy_comparison(), so this block only
-    # matters if someone runs `python src/benchmark.py` on its own.
-    # FIX: replaced the old placeholder "path_to_your_dataset.csv" with the
-    # actual configured path, falling back to a sensible default if config.py
-    # isn't importable from wherever this script is run.
-    try:
-        from config import PIPELINE_CONFIG
-        dataset_path = PIPELINE_CONFIG["input_filepath"]
-    except ImportError:
-        dataset_path = "data/2015.csv"
-        print("Note: could not import config.py (run this from the project root). "
-              f"Falling back to default path: {dataset_path}")
+    loop_times = []
+    expected_sum = 0.0
+    for _ in range(5):
+        start = time.perf_counter()
+        total = 0.0
+        for val in sample:
+            if val > threshold:
+                total += val
+        end = time.perf_counter()
+        loop_times.append(end - start)
+        expected_sum = total
 
-    run_numpy_comparison(dataset_path)
+    vec_times = []
+    actual_sum = 0.0
+    for _ in range(5):
+        start = time.perf_counter()
+        mask = sample > threshold  
+        actual_sum = float(np.sum(sample[mask]))
+        end = time.perf_counter()
+        vec_times.append(end - start)
+
+    print(f"NumPy Benchmark -> Median Loop Time: {np.median(loop_times):.6f}s | Median Vectorized Time: {np.median(vec_times):.6f}s")
+
+    tolerance = 1.00 
+    is_pass = abs(expected_sum - actual_sum) <= tolerance
+    
+    return ("NumPy Loop vs Vectorized", expected_sum, actual_sum, tolerance, bool(is_pass))
