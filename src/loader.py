@@ -8,8 +8,15 @@ import sys
 import pandas as pd
 from typing import Dict, List, Set, Tuple
 
-def ingest_data(filepath: str, required_cols: Set[str], chunk_size: int = 100000) -> Tuple[pd.DataFrame, int, float]:
-    """loads the dataset in chunks, checks for required columns, and gets raw totals"""
+def ingest_data(filepath: str, required_cols: Set[str], chunk_size: int = 100000) -> Tuple[pd.DataFrame, int, float, int]:
+    """loads the dataset in chunks, checks for required columns, and gets raw totals
+
+    Returns:
+        A tuple of (df, raw_row_count, raw_sum, raw_col_count), where
+        raw_col_count is the number of columns in the *original* file
+        (before usecols narrows it down), needed for the Customs 2015
+        reference check against 30 columns.
+    """
     
     # control structure 1: missing file
     if not os.path.exists(filepath):
@@ -23,6 +30,10 @@ def ingest_data(filepath: str, required_cols: Set[str], chunk_size: int = 100000
     try:
         # check columns on first 5 rows to save ram
         first_chunk = pd.read_csv(filepath, nrows=5, encoding='latin1') # encoding to account for special characters
+        
+        # capture the raw column count (from the full file, before usecols
+        # narrows things down) for the Step 4 reference check
+        raw_col_count = len(first_chunk.columns)
         
         # control structure 2: missing columns
         missing_cols = required_cols - set(first_chunk.columns)
@@ -40,7 +51,7 @@ def ingest_data(filepath: str, required_cols: Set[str], chunk_size: int = 100000
             chunks.append(chunk)
             
         df = pd.concat(chunks, ignore_index=True)
-        return df, raw_row_count, raw_sum
+        return df, raw_row_count, raw_sum, raw_col_count
         
     except Exception as e:
         print(f"CRITICAL ERROR during file reading: {e}")
@@ -69,10 +80,15 @@ def filter_and_transform(df: pd.DataFrame, config: Dict) -> Tuple[pd.DataFrame, 
     filtered_df['estimated_vat_php'] = filtered_df['dutiablevaluephp'] * 0.12
     filtered_df['is_high_value_flag'] = filtered_df['dutiablevaluephp'] > 1000000
     
-    # explicitly group missing categories
-    filtered_df['countryorigin_iso3'] = filtered_df['countryorigin_iso3'].fillna("MISSING_COUNTRY")
-    filtered_df['tq'] = filtered_df['tq'].fillna("MISSING_TQ")
-    # leave numerical NaNs alone per rubric rules
+    # NOTE: missing-category standardization (explicit "MISSING" group) is
+    # handled downstream by cleaner.DataCleaner.standardize_missing(), per
+    # the group's integration contract (pipeline order: loader -> cleaner
+    # -> analytics). Doing it here too used a different placeholder string
+    # ("MISSING_COUNTRY"/"MISSING_TQ") than cleaner's default ("MISSING"),
+    # and the countryorigin_iso3 fill was dead code anyway: the mask above
+    # requires an exact match against target_country, so a NaN in that
+    # column can never survive the filter. Leave numerical NaNs alone per
+    # rubric rules; that never happens here or in cleaner.py.
     
     # generate audit record
     audit_record = {

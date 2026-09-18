@@ -7,12 +7,20 @@ def run_numpy_comparison(data_path: str, sample_size: int = 100000) -> tuple[flo
     Compares the execution time of a loop-based calculation versus a vectorised 
     NumPy equivalent using a fixed-seed sample from the 'dutiablevaluephp' column.
     """
-    df = pd.read_csv(data_path)
+    # FIX: matches loader.py's encoding='latin1' - the raw file has bytes
+    # that aren't valid UTF-8, so the default encoding crashes on the real
+    # 2015.csv with UnicodeDecodeError.
+    df = pd.read_csv(data_path, encoding='latin1')
     data_array = df["dutiablevaluephp"].sample(n=sample_size, random_state=42).to_numpy()
     
     threshold = 15000.0
     multiplier = 1.10
-    tolerance = 1e-8
+    # FIX: 1e-8 was unrealistically tight for sums in the hundreds of
+    # billions of PHP - ordinary floating-point summation drift of a
+    # fraction of a peso was enough to fail validation.csv's check even
+    # though the two totals genuinely agree. 0.01 (one centavo) matches
+    # validator.py's own DEFAULT_TOLERANCE convention for measure sums.
+    tolerance = 0.01
     
     loop_times = []
     vectorised_times = []
