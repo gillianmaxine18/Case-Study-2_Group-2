@@ -113,7 +113,7 @@ class DataCleaner:
         )
         return cleaned
 
-        def flag_outliers(self, df: pd.DataFrame, column: str, threshold: float) -> pd.DataFrame:
+    def flag_outliers(self, df: pd.DataFrame, column: str, threshold: float) -> pd.DataFrame:
         """Add a Boolean flag column marking values above a threshold.
 
         Args:
