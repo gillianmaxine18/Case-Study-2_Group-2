@@ -8,7 +8,7 @@ def load_data(filepath: str, required_columns: set) -> Tuple[pd.DataFrame, List[
     if not os.path.exists(filepath):
         raise FileNotFoundError(f"Missing file: {filepath}")
     
-    df = pd.read_csv(filepath, low_memory=False)
+    df = pd.read_csv(filepath, low_memory=False, encoding='latin1')
     
     missing_cols = required_columns - set(df.columns)
     if missing_cols:
