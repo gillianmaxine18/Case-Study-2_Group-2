@@ -4,6 +4,13 @@ import seaborn as sns
 import os
 
 def plot_top10_bar(top10_df: pd.DataFrame, output_dir: str) -> None:
+    """Draw and save a bar chart of the top 10 groups by measure sum.
+
+    Args:
+        top10_df: The top10.csv DataFrame from analytics.generate_summaries,
+            with 'countryorigin_iso3' and 'measure_sum' columns.
+        output_dir: Folder to save bar.png into. Created if missing.
+    """
     os.makedirs(output_dir, exist_ok=True)
     
     plt.figure(figsize=(10, 6))
@@ -24,12 +31,26 @@ def plot_top10_bar(top10_df: pd.DataFrame, output_dir: str) -> None:
     plt.savefig(os.path.join(output_dir, 'bar.png'))
     plt.close()
 
-def plot_pivot_heatmap(pivot_df: pd.DataFrame, output_dir: str) -> None:
+def plot_pivot_heatmap(pivot_df: pd.DataFrame, output_dir: str, margin_label: str = 'Total_Sum') -> None:
+    """Draw and save a heatmap of the pivot table, excluding margins.
+
+    Args:
+        pivot_df: The pivot.csv DataFrame from analytics.generate_summaries,
+            built with margins=True.
+        output_dir: Folder to save heatmap.png into. Created if missing.
+        margin_label: The label used for the margins row/column. Must
+            match analytics.py's margins_name exactly (default 'Total_Sum')
+            or the margin row/column won't actually be excluded.
+    """
     os.makedirs(output_dir, exist_ok=True)
     plt.figure(figsize=(12, 8))
     
-    # exclude margins: drop the 'Total' row and column before plotting
-    heatmap_data = pivot_df.drop(index='Total', errors='ignore').drop(columns='Total', errors='ignore')
+    # exclude margins: drop the margin row and column before plotting.
+    # FIX: this previously dropped index/columns literally named 'Total',
+    # but analytics.py builds the pivot with margins_name='Total_Sum', so
+    # that drop silently matched nothing (errors='ignore' masked it) and
+    # the margin row/column leaked into the heatmap.
+    heatmap_data = pivot_df.drop(index=margin_label, errors='ignore').drop(columns=margin_label, errors='ignore')
     
     # create the heatmap
     sns.heatmap(heatmap_data, cmap='YlGnBu', annot=False, cbar_kws={'label': 'Dutiable Value (PHP)'})
