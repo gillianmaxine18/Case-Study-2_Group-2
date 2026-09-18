@@ -1,7 +1,23 @@
 import pandas as pd
 import os
 
+
 def generate_summaries(df: pd.DataFrame, output_dir: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Generate the four required summary tables from the cleaned dataset.
+
+    Writes grouped.csv, grouped_two.csv, pivot.csv, and top10.csv to
+    output_dir, and returns each as a DataFrame for downstream use
+    (plotting and validation).
+
+    Args:
+        df: The cleaned, filtered DataFrame to summarize. Must contain
+            'countryorigin_iso3', 'tq', and 'dutiablevaluephp'.
+        output_dir: Folder to write the four CSV files into. Created if
+            it doesn't already exist.
+
+    Returns:
+        A tuple of (grouped, grouped_two, pivot, top10) DataFrames.
+    """
     #output folder maker if there's none
     os.makedirs(output_dir, exist_ok=True)
 
