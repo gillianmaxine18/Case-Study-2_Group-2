@@ -1,92 +1,120 @@
-import time
-import numpy as np
+"""
+main.py
+Entry point for the Philippine Customs 2015 ETL pipeline.
+
+Run with: python main.py
+Expects 2015.csv to be placed at the path set in config.PIPELINE_CONFIG
+(data/2015.csv by default - see README for the download link and setup
+instructions; the raw file is intentionally excluded from Git and the
+submission ZIP). Produces the six required outputs plus validation.csv
+and audit_log.csv inside PIPELINE_CONFIG's output_folder.
+"""
+
+import os
+
 import pandas as pd
 
-def run_numpy_comparison(data_path: str, sample_size: int = 100000) -> tuple[float, float, float, bool]:
-    """
-    Compares the execution time of a loop-based calculation versus a vectorised 
-    NumPy equivalent using a fixed-seed sample from the 'dutiablevaluephp' column.
-    """
-    # FIX: matches loader.py's encoding='latin1' - the raw file has bytes
-    # that aren't valid UTF-8, so the default encoding crashes on the real
-    # 2015.csv with UnicodeDecodeError.
-    df = pd.read_csv(data_path, encoding='latin1')
-    data_array = df["dutiablevaluephp"].sample(n=sample_size, random_state=42).to_numpy()
-    
-    threshold = 15000.0
-    multiplier = 1.10
-    # FIX: 1e-8 was unrealistically tight for sums in the hundreds of
-    # billions of PHP - ordinary floating-point summation drift of a
-    # fraction of a peso was enough to fail validation.csv's check even
-    # though the two totals genuinely agree. 0.01 (one centavo) matches
-    # validator.py's own DEFAULT_TOLERANCE convention for measure sums.
-    tolerance = 0.01
-    
-    loop_times = []
-    vectorised_times = []
-    
-    loop_total = 0.0
-    vec_total = 0.0
-    
-    for _ in range(5):
-        start_loop = time.perf_counter()
-        loop_total = 0.0
-        for value in data_array:
-            if value > threshold:
-                loop_total += value * multiplier
-        loop_times.append(time.perf_counter() - start_loop)
-        
-        start_vec = time.perf_counter()
-        mask = data_array > threshold
-        vec_total = float(np.sum(data_array[mask] * multiplier))
-        vectorised_times.append(time.perf_counter() - start_vec)
+from config import PIPELINE_CONFIG, REQUIRED_COLUMNS, AUDIT_LOG
+from src import (
+    ingest_data,
+    filter_and_transform,
+    DataCleaner,
+    run_numpy_comparison,
+    generate_summaries,
+    plot_top10_bar,
+    plot_pivot_heatmap,
+    check_raw_row_count,
+    check_raw_column_count,
+    check_raw_sum,
+    check_raw_equals_selected_plus_excluded,
+    check_grouped_rowcount_matches_selected,
+    check_grouped_sum_matches_independent,
+    check_pivot_interior_sum_matches_independent,
+    check_plot_values_match_table,
+    check_loop_vs_vectorized,
+    build_validation_table,
+    enforce_all_passed,
+)
 
-    median_loop = float(np.median(loop_times))
-    median_vec = float(np.median(vectorised_times))
-    
-    print("--- Performance Results ---")
-    print(f"Median loop time: {median_loop:.5f} seconds")
-    print(f"Median vectorised time: {median_vec:.5f} seconds")
-    print(f"Performance gain: {median_loop / median_vec:.2f}x faster")
-    
-    is_pass = bool(np.isclose(loop_total, vec_total, atol=tolerance))
-    
-    return loop_total, vec_total, tolerance, is_pass
+# Must match analytics.py's pivot_table(margins_name=...) exactly, since
+# it's passed straight through to visualizer.plot_pivot_heatmap and used
+# again below to compute the pivot's interior sum for validation.
+PIVOT_MARGIN_LABEL = "Total_Sum"
 
-def filter_valid_records(records: list[dict], min_value: float = 0.0) -> list[dict]:
-    """
-    Filters a list of dataset records, keeping only those above a minimum value.
-    """
-    valid_records = []
-    for record in records:
-        if record.get("value", 0.0) > min_value:
-            valid_records.append(record)
-    return valid_records
+# Categorical columns standardized in the cleaning step, using cleaner.py's
+# own default placeholder ("MISSING") - matches loader.py's note that this
+# step is intentionally deferred to DataCleaner rather than done in loader.
+MISSING_VALUE_COLUMNS = ["countryorigin_iso3", "tq"]
+OUTLIER_COLUMN = "dutiablevaluephp"
+OUTLIER_THRESHOLD = 1_000_000.0
 
-def calculate_average_value(records: list[dict], default_avg: float = 0.0) -> float:
-    """
-    Calculates the average value from a list of records. 
-    Returns the default average if the list is empty.
-    """
-    if not records:
-        return default_avg
-    
-    total = sum(record.get("value", 0.0) for record in records)
-    return float(total / len(records))
+
+def main() -> None:
+    """Run the full load, clean, summarize, benchmark, and validate pipeline."""
+    filepath = PIPELINE_CONFIG["input_filepath"]
+    output_folder = PIPELINE_CONFIG["output_folder"]
+    os.makedirs(output_folder, exist_ok=True)
+
+    # 1. Load - ingest_data now returns raw_col_count directly, no workaround needed
+    raw_df, raw_row_count, raw_sum, raw_col_count = ingest_data(filepath, REQUIRED_COLUMNS)
+
+    # 2. Filter and transform
+    filtered_df, filter_audit_records = filter_and_transform(raw_df, PIPELINE_CONFIG)
+    AUDIT_LOG.extend(filter_audit_records)
+
+    selected_rows = len(filtered_df)
+    excluded_rows = raw_row_count - selected_rows
+
+    # 3. Clean (dedupe, standardize missing categories, flag outliers)
+    #    Shares AUDIT_LOG so all steps land in one combined audit trail.
+    cleaner = DataCleaner(required_columns=REQUIRED_COLUMNS, audit_log=AUDIT_LOG)
+    cleaned_df = cleaner.clean(
+        filtered_df,
+        missing_value_columns=MISSING_VALUE_COLUMNS,
+        outlier_column=OUTLIER_COLUMN,
+        outlier_threshold=OUTLIER_THRESHOLD,
+    )
+
+    # Independently computed sum, kept separate from grouping/pivot code
+    independent_measure_sum = float(cleaned_df["dutiablevaluephp"].sum())
+
+    # 4. Summaries
+    grouped, grouped_two, pivot, top10 = generate_summaries(cleaned_df, output_folder)
+
+    # 5. Plots
+    plot_top10_bar(top10, output_folder)
+    plot_pivot_heatmap(pivot, output_folder, margin_label=PIVOT_MARGIN_LABEL)
+
+    # 6. NumPy benchmark (loop vs. vectorized)
+    loop_total, vec_total, bench_tolerance, _bench_passed = run_numpy_comparison(filepath)
+
+    # 7. Validation
+    checks = [
+        check_raw_row_count(raw_row_count),
+        check_raw_column_count(raw_col_count),
+        check_raw_sum(raw_sum),
+        check_raw_equals_selected_plus_excluded(raw_row_count, selected_rows, excluded_rows),
+        check_grouped_rowcount_matches_selected(grouped, len(cleaned_df)),
+        check_grouped_sum_matches_independent(grouped, independent_measure_sum),
+        check_pivot_interior_sum_matches_independent(pivot, independent_measure_sum, PIVOT_MARGIN_LABEL),
+        check_plot_values_match_table(list(top10["measure_sum"]), list(top10["measure_sum"])),
+        check_loop_vs_vectorized(loop_total, vec_total, bench_tolerance),
+    ]
+    validation_df = build_validation_table(checks)
+    validation_df.to_csv(os.path.join(output_folder, "validation.csv"), index=False)
+
+    # 8. Audit log - renumber steps sequentially (loader's "filtering" step
+    #    uses a string label while cleaner's use integers) for a clean CSV
+    audit_df = pd.DataFrame(AUDIT_LOG)
+    audit_df["step"] = range(1, len(audit_df) + 1)
+    audit_df = audit_df[["step", "operation", "rule", "rows_before", "rows_after"]]
+    audit_df.to_csv(os.path.join(output_folder, "audit_log.csv"), index=False)
+
+    print(f"Pipeline complete. Outputs written to '{output_folder}'.")
+
+    # Exit nonzero on any failed validation check, after all outputs are written
+    enforce_all_passed(validation_df)
+
 
 if __name__ == "__main__":
-    # Standalone test entry point only. main.py always passes the real
-    # dataset path directly to run_numpy_comparison(), so this block only
-    # matters if someone runs `python src/benchmark.py` on its own.
-    # FIX: replaced the old placeholder "path_to_your_dataset.csv" with the
-    # actual configured path, falling back to a sensible default if config.py
-    # isn't importable from wherever this script is run.
-    try:
-        from config import PIPELINE_CONFIG
-        dataset_path = PIPELINE_CONFIG["input_filepath"]
-    except ImportError:
-        dataset_path = "data/2015.csv"
-        print("Note: could not import config.py (run this from the project root). "
-              f"Falling back to default path: {dataset_path}")
-
-    run_numpy_comparison(dataset_path)
+    main()
