@@ -1,29 +1,32 @@
 import pandas as pd
 import os
 
-
 def generate_summaries(df: pd.DataFrame, output_dir: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Generate the four required summary tables from the cleaned dataset.
+    """Group, pivot, and rank the cleaned dataset, writing four CSVs.
 
-    Writes grouped.csv, grouped_two.csv, pivot.csv, and top10.csv to
-    output_dir, and returns each as a DataFrame for downstream use
-    (plotting and validation).
+    Expects df to already have missing categories standardized by
+    cleaner.DataCleaner.standardize_missing() upstream. The fillna calls
+    below use the same placeholder ("MISSING") purely as a defensive
+    fallback so results stay consistent even if this function is ever
+    called on its own, outside the normal loader -> cleaner -> analytics
+    pipeline order.
 
     Args:
-        df: The cleaned, filtered DataFrame to summarize. Must contain
-            'countryorigin_iso3', 'tq', and 'dutiablevaluephp'.
-        output_dir: Folder to write the four CSV files into. Created if
-            it doesn't already exist.
+        df: The filtered, cleaned DataFrame to summarize.
+        output_dir: Folder to write grouped.csv, grouped_two.csv,
+            pivot.csv, and top10.csv into. Created if it doesn't exist.
 
     Returns:
-        A tuple of (grouped, grouped_two, pivot, top10) DataFrames.
+        A tuple of (grouped, grouped_two, pivot, top10) DataFrames,
+        matching what was written to disk.
     """
     #output folder maker if there's none
     os.makedirs(output_dir, exist_ok=True)
 
-    # convert missing categories to explicit strings so they appear as groups
-    df['countryorigin_iso3'] = df['countryorigin_iso3'].fillna('Missing')
-    df['tq'] = df['tq'].fillna('Missing')
+    # defensive fallback only: cleaner.py should already have standardized
+    # these using the same "MISSING" placeholder (see docstring above)
+    df['countryorigin_iso3'] = df['countryorigin_iso3'].fillna('MISSING')
+    df['tq'] = df['tq'].fillna('MISSING')
 
     # 1. grouped.csv: Group by 1st category
     grouped = df.groupby('countryorigin_iso3', dropna=False).agg(
