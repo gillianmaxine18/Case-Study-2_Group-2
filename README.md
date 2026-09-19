@@ -1,5 +1,6 @@
 # Case Study 2: "Build a Philippine Data Summary Program" - Group 2
 
+## Project Google Drive Link: https://drive.google.com/drive/folders/1mL3LtozoE_Se__jcpsFeg2_lrlrKungJ?usp=sharing
 ## Project Description
 
 This project delivers an automated, reproducible Python data processing pipeline designed to ingest, transform, analyze, and audit large-scale Philippine public datasets. Using the **2015 Philippine Customs dataset** (~493.5 MB), the system processes over 2.2 million import transactions to generate summary statistics, create decision-ready data visualizations, and execute rigorous mathematical integrity checks.
@@ -33,7 +34,16 @@ The program performs:
 | **Hans Adrian Laudato** | • NumPy array conversions & vectorized operations<br>• Boolean masks & aggregation logic<br>• Performance benchmark (Loop vs. Vectorized over 5 runs with fixed seed) | `feature/numpy-benchmark` | `src/benchmark.py` 
 | **Kaycelyn Tigas** | • Summary CSV generation (`grouped`, `grouped_two`, `pivot`, `top10`) <br>• Visualizations: Matplotlib bar chart & Seaborn heatmap | `feature/summary-outputs` | `src/analytics.py`<br>`src/visualizer.py` 
 | **Gillian Maxine Estilloso** | • Automated validation framework (`validation.csv`) & tolerance checks<br>• Dynamic audit trail generation (`audit_log.csv`)<br>• Main execution driver (`main.py`) & exit status handling | `feature/validation-audit` | `src/validator.py`<br>`main.py` 
+## Group Members
 
+| Member | Assigned Task / Requirements | Dedicated Branch Name GitHub Username |
+|---|---|---|
+| **Kate Robyn Alday** | • Configuration dictionary & environment setup<br>• Control structures for data pipeline execution<br>• Data structures (audit records, required columns)<br>• Type hinting lead across modules | `feature/data-structures` | `config.py`<br>`src/loader.py` 
+| **Giana Elisha Tuplano** | • OOP implementation: Dataset Cleaner class & 3 methods<br>• Module initialization & package structure<br>• Pandas data filtering, `.loc` selection, & derived columns | `feature/oop-cleaner` | `src/cleaner.py`<br>`src/__init__.py` 
+| **Hans Adrian Laudato** | • NumPy array conversions & vectorized operations<br>• Boolean masks & aggregation logic<br>• Performance benchmark (Loop vs. Vectorized over 5 runs with fixed seed) | `feature/numpy-benchmark` | `src/benchmark.py` 
+| **Kaycelyn Tigas** | • Summary CSV generation (`grouped`, `grouped_two`, `pivot`, `top10`) <br>• Visualizations: Matplotlib bar chart & Seaborn heatmap | `feature/summary-outputs` | `src/analytics.py`<br>`src/visualizer.py` 
+| **Gillian Maxine Estilloso** | • Automated validation framework (`validation.csv`) & tolerance checks<br>• Dynamic audit trail generation (`audit_log.csv`)<br>• Main execution driver (`main.py`) & exit status handling | `feature/validation-audit` | `src/validator.py`<br>`main.py` 
+---
 ---
 
 ## Repository Structure
