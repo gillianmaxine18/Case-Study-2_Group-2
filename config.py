@@ -18,7 +18,7 @@ PIPELINE_CONFIG = {
     "grouping_columns": ["countryorigin_iso3", "tq"],
     "numerical_measure": "dutiablevaluephp",
 
-    # required source documentation for selected fields
+    # required source documentation afor selected fields
     "field_metadata": {
         "countryorigin_iso3": "Origin country of the import (ISO-3 code).",
         # FIX: tq actually holds the reporting quarter (2015q1-2015q4), not a tariff-quota
