@@ -1,12 +1,11 @@
 """
-cleaner.py
-OOP-based data cleaning utilities for the Customs 2015 pipeline.
+analytics.py
+Summary and aggregation outputs for the Customs 2015 pipeline.
 
-Defines the DataCleaner class, which performs cleaning operations on the
-DataFrame produced by loader.py (deduplication, standardizing messy
-category values, and flagging outliers) and records each action into a
-shared audit log list, such as config.AUDIT_LOG, for later export by
-validator.py.
+Defines generate_summaries(), which takes the cleaned DataFrame from
+cleaner.py and produces four output files: grouped.csv (single-category
+group summary), grouped_two.csv (two-category group summary), pivot.csv
+(pivot table with margins), and top10.csv (top 10 groups by measure sum).
 """
 
 import pandas as pd
