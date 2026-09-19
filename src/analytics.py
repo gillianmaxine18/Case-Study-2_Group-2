@@ -1,32 +1,24 @@
+"""
+cleaner.py
+OOP-based data cleaning utilities for the Customs 2015 pipeline.
+
+Defines the DataCleaner class, which performs cleaning operations on the
+DataFrame produced by loader.py (deduplication, standardizing messy
+category values, and flagging outliers) and records each action into a
+shared audit log list, such as config.AUDIT_LOG, for later export by
+validator.py.
+"""
+
 import pandas as pd
 import os
 
 def generate_summaries(df: pd.DataFrame, output_dir: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Group, pivot, and rank the cleaned dataset, writing four CSVs.
-
-    Expects df to already have missing categories standardized by
-    cleaner.DataCleaner.standardize_missing() upstream. The fillna calls
-    below use the same placeholder ("MISSING") purely as a defensive
-    fallback so results stay consistent even if this function is ever
-    called on its own, outside the normal loader -> cleaner -> analytics
-    pipeline order.
-
-    Args:
-        df: The filtered, cleaned DataFrame to summarize.
-        output_dir: Folder to write grouped.csv, grouped_two.csv,
-            pivot.csv, and top10.csv into. Created if it doesn't exist.
-
-    Returns:
-        A tuple of (grouped, grouped_two, pivot, top10) DataFrames,
-        matching what was written to disk.
-    """
     #output folder maker if there's none
     os.makedirs(output_dir, exist_ok=True)
 
-    # defensive fallback only: cleaner.py should already have standardized
-    # these using the same "MISSING" placeholder (see docstring above)
-    df['countryorigin_iso3'] = df['countryorigin_iso3'].fillna('MISSING')
-    df['tq'] = df['tq'].fillna('MISSING')
+    # convert missing categories to explicit strings so they appear as groups
+    df['countryorigin_iso3'] = df['countryorigin_iso3'].fillna('Missing')
+    df['tq'] = df['tq'].fillna('Missing')
 
     # 1. grouped.csv: Group by 1st category
     grouped = df.groupby('countryorigin_iso3', dropna=False).agg(
