@@ -26,24 +26,13 @@ The program performs:
 ---
 
 ## Member Roles & Task Allocation
-
-| Member | Assigned Task / Requirements | Dedicated Branch Name | Primary Files Owned |
-| :--- | :--- | :--- | :--- | :---: |
-| **Kate Robyn Alday** | • Configuration dictionary & environment setup<br>• Control structures for data pipeline execution<br>• Data structures (audit records, required columns)<br>• Type hinting lead across modules | `feature/data-structures` | `config.py`<br>`src/loader.py` 
-| **Giana Elisha Tuplano** | • OOP implementation: Dataset Cleaner class & 3 methods<br>• Module initialization & package structure<br>• Pandas data filtering, `.loc` selection, & derived columns | `feature/oop-cleaner` | `src/cleaner.py`<br>`src/__init__.py` 
-| **Hans Adrian Laudato** | • NumPy array conversions & vectorized operations<br>• Boolean masks & aggregation logic<br>• Performance benchmark (Loop vs. Vectorized over 5 runs with fixed seed) | `feature/numpy-benchmark` | `src/benchmark.py` 
-| **Kaycelyn Tigas** | • Summary CSV generation (`grouped`, `grouped_two`, `pivot`, `top10`) <br>• Visualizations: Matplotlib bar chart & Seaborn heatmap | `feature/summary-outputs` | `src/analytics.py`<br>`src/visualizer.py` 
-| **Gillian Maxine Estilloso** | • Automated validation framework (`validation.csv`) & tolerance checks<br>• Dynamic audit trail generation (`audit_log.csv`)<br>• Main execution driver (`main.py`) & exit status handling | `feature/validation-audit` | `src/validator.py`<br>`main.py` 
-## Group Members
-
-| Member | Assigned Task / Requirements | Dedicated Branch Name GitHub Username |
+| Member | Assigned Task / Requirements | Dedicated Branch Name \ GitHub Username |
 |---|---|---|
 | **Kate Robyn Alday** | • Configuration dictionary & environment setup<br>• Control structures for data pipeline execution<br>• Data structures (audit records, required columns)<br>• Type hinting lead across modules | `feature/data-structures` | `config.py`<br>`src/loader.py` 
 | **Giana Elisha Tuplano** | • OOP implementation: Dataset Cleaner class & 3 methods<br>• Module initialization & package structure<br>• Pandas data filtering, `.loc` selection, & derived columns | `feature/oop-cleaner` | `src/cleaner.py`<br>`src/__init__.py` 
 | **Hans Adrian Laudato** | • NumPy array conversions & vectorized operations<br>• Boolean masks & aggregation logic<br>• Performance benchmark (Loop vs. Vectorized over 5 runs with fixed seed) | `feature/numpy-benchmark` | `src/benchmark.py` 
 | **Kaycelyn Tigas** | • Summary CSV generation (`grouped`, `grouped_two`, `pivot`, `top10`) <br>• Visualizations: Matplotlib bar chart & Seaborn heatmap | `feature/summary-outputs` | `src/analytics.py`<br>`src/visualizer.py` 
 | **Gillian Maxine Estilloso** | • Automated validation framework (`validation.csv`) & tolerance checks<br>• Dynamic audit trail generation (`audit_log.csv`)<br>• Main execution driver (`main.py`) & exit status handling | `feature/validation-audit` | `src/validator.py`<br>`main.py` 
----
 ---
 
 ## Repository Structure
