@@ -68,16 +68,15 @@ def ingest_data(filepath: str, required_cols: Set[str], chunk_size: int = 100000
 def filter_and_transform(df: pd.DataFrame, config: Dict) -> Tuple[pd.DataFrame, List[dict]]:
     """applies filters, sorts the data, and adds derived columns."""
     
-    quarter = config["filters"]["target_quarter"]
+    prefcode = config["filters"]["target_prefcode"]
     min_value = config["filters"]["min_value_php"]
 
-    # 1. filter with .loc using two conditions
-    mask = (df['tq'] == quarter) & (df['dutiablevaluephp'] > min_value)
+    mask = (df['prefcode'] == prefcode) & (df['dutiablevaluephp'] > min_value)
     filtered_df = df.loc[mask].copy()
     
     # control structure 3: filter returns empty
     if len(filtered_df) == 0:
-        print(f"WARNING: filter for quarter '{quarter}' and value > {min_value} returned 0 rows.")
+        print(f"WARNING: filter for prefcode '{prefcode}' and value > {min_value} returned 0 rows.")
         sys.exit(1)
         
     # 2. sort by measure descending
@@ -99,7 +98,7 @@ def filter_and_transform(df: pd.DataFrame, config: Dict) -> Tuple[pd.DataFrame, 
     audit_record = {
         "step": "filtering",
         "operation": "apply_loc_conditions",
-        "rule": f"tq == '{quarter}' AND value > {min_value}",
+        "rule": f"prefcode == '{prefcode}' AND value > {min_value}",
         "rows_before": len(df),
         "rows_after": len(filtered_df)
     }

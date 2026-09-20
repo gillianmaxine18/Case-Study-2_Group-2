@@ -104,7 +104,7 @@ def check_pivot_interior_sum_matches_independent(
         tolerance: Allowed absolute difference for a pass.
     """
     interior = pivot_df.drop(index=margin_label, errors="ignore").drop(columns=margin_label, errors="ignore")
-    total = float(interior.to_numpy().sum())
+    total = float(interior.sum().sum())
     return _make_check("pivot_interior_sum_matches_independent_sum", independent_sum, total, tolerance)
 
 def check_plot_values_match_table(
