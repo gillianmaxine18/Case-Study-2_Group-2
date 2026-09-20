@@ -58,10 +58,11 @@ The program performs:
 ## Filter and Transformation Rules
 
 **Filter conditions** (applied via `.loc` with two conditions):
-- `tq == "2015q1"` — reporting quarter is Q1 2015
+- `prefcode == "AFMA"` — shipments entered under the Agriculture and Fisheries Modernization Act preferential tariff code
 - `dutiablevaluephp > 1000.0` — dutiable value exceeds PHP 1,000
 - *Assumption:* shipments with a dutiable value of PHP 1,000 or below are treated as negligible/noise for this analysis and excluded.
-- *Note:* an earlier version of this filter used `countryorigin_iso3 == "CHN"` instead of the quarter condition, but that collapsed `grouped.csv`/`top10.csv`/`bar.png` to a single country (since the same column was both the filter and the grouping key). Switched to filtering on `tq` so the two category columns used for filtering and grouping don't collide.
+
+**Why `prefcode` and not `countryorigin_iso3` or `tq`:** our two grouping columns for `grouped.csv`/`pivot.csv`/`top10.csv` are `countryorigin_iso3` and `tq`. Two earlier versions of this filter used an exact-match condition on one of those same two columns (`countryorigin_iso3 == "CHN"`, then later `tq == "2015q1"`) — each time, that collapsed one grouping dimension down to a single value, so `top10.csv` or `heatmap.png` only ever showed one country or one quarter instead of a real comparison. Filtering on `prefcode` instead avoids this: it narrows the dataset (2,939 rows after cleaning) without constraining either grouping column, so both `top10.csv` (44 distinct countries to rank) and `heatmap.png` (all 4 quarters present) show genuine variation.
 
 **Sorting:** filtered records are sorted by `dutiablevaluephp` in descending order.
 
@@ -79,6 +80,7 @@ The program performs:
 | `countryorigin_iso3` | Origin country of the import (ISO-3 code) |
 | `tq` | Reporting quarter the import was recorded in (e.g. `2015q1`–`2015q4`) |
 | `dutiablevaluephp` | Dutiable value in Philippine Pesos (PHP) |
+| `prefcode` | Preferential tariff treatment code under which the shipment was entered (e.g. `AFMA` — Agriculture and Fisheries Modernization Act) |
 
 ---
 
@@ -99,8 +101,8 @@ If any validation check fails, the program prints the specific discrepancy and e
 
 ## Plot Descriptions
 
-- **`bar.png`** — Shows the top 10 origin countries ranked by total dutiable value (PHP), after filtering to Q1 2015 shipments over PHP 1,000.
-- **`heatmap.png`** — Shows total dutiable value (PHP) broken down by both origin country and reporting quarter, with the margin totals excluded so the color scale reflects only the individual category combinations.
+- **`bar.png`** — Shows the top 10 origin countries ranked by total dutiable value (PHP), after filtering to shipments entered under the AFMA preferential tariff code with dutiable value over PHP 1,000.
+- **`heatmap.png`** — Shows total dutiable value (PHP) broken down by both origin country and reporting quarter, for AFMA-filtered shipments, with the margin totals excluded so the color scale reflects only the individual category combinations.
 
 ---
 
