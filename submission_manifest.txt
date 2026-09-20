@@ -1,0 +1,3 @@
+Repository URL: https://github.com/gillianmaxine18/Case-Study-2_Group-2.git
+Release Tag: v1.0.0
+Full Commit Hash: 5db7c9283dd9ee4b82cadf3c8e478ce86c57b052
