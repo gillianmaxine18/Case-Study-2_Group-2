@@ -217,3 +217,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+cat >> .gitignore << 'EOF'
+
+# Project-specific
+outputs/
+.DS_Store

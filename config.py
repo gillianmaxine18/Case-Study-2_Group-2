@@ -15,10 +15,10 @@ PIPELINE_CONFIG = {
     "input_filepath": "data/2015.csv",  # standardized to the data/ folder convention (see README)
     "output_folder": "outputs/",
     "filters": {
-        "target_country": "CHN",   # Condition 1: Origin country is China
-        "min_value_php": 1000.0    # Condition 2: Dutiable value > 1000
-                                    # Assumption: shipments under PHP 1,000 dutiable value are treated
-                                    # as negligible/noise for this analysis.
+    "target_quarter": "2015q1", # Condition 1: reporting quarter is Q1 2015
+    "min_value_php": 1000.0     # Condition 2: Dutiable value > 1000
+                                 # Assumption: shipments under PHP 1,000 dutiable value are treated
+                                 # as negligible/noise for this analysis.
     },
     # rubric strictly three columns for Customs 2015
     "grouping_columns": ["countryorigin_iso3", "tq"],
