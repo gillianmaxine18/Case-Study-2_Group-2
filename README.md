@@ -58,9 +58,10 @@ The program performs:
 ## Filter and Transformation Rules
 
 **Filter conditions** (applied via `.loc` with two conditions):
-- `countryorigin_iso3 == "CHN"` — origin country is China
+- `tq == "2015q1"` — reporting quarter is Q1 2015
 - `dutiablevaluephp > 1000.0` — dutiable value exceeds PHP 1,000
 - *Assumption:* shipments with a dutiable value of PHP 1,000 or below are treated as negligible/noise for this analysis and excluded.
+- *Note:* an earlier version of this filter used `countryorigin_iso3 == "CHN"` instead of the quarter condition, but that collapsed `grouped.csv`/`top10.csv`/`bar.png` to a single country (since the same column was both the filter and the grouping key). Switched to filtering on `tq` so the two category columns used for filtering and grouping don't collide.
 
 **Sorting:** filtered records are sorted by `dutiablevaluephp` in descending order.
 
@@ -98,7 +99,7 @@ If any validation check fails, the program prints the specific discrepancy and e
 
 ## Plot Descriptions
 
-- **`bar.png`** — Shows the top 10 origin countries ranked by total dutiable value (PHP), after filtering to China-origin shipments over PHP 1,000.
+- **`bar.png`** — Shows the top 10 origin countries ranked by total dutiable value (PHP), after filtering to Q1 2015 shipments over PHP 1,000.
 - **`heatmap.png`** — Shows total dutiable value (PHP) broken down by both origin country and reporting quarter, with the margin totals excluded so the color scale reflects only the individual category combinations.
 
 ---
