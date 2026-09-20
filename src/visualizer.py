@@ -53,17 +53,17 @@ def plot_pivot_heatmap(pivot_df: pd.DataFrame, output_dir: str, margin_label: st
             or the margin row/column won't actually be excluded.
     """
     os.makedirs(output_dir, exist_ok=True)
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(12, 14))
     
     # exclude margins: drop the margin row and column before plotting
     heatmap_data = pivot_df.drop(index=margin_label, errors='ignore').drop(columns=margin_label, errors='ignore')
     
     # create the heatmap
-    sns.heatmap(heatmap_data, cmap='YlGnBu', annot=False, cbar_kws={'label': 'Dutiable Value (PHP)'})
+    sns.heatmap(heatmap_data, cmap='YlGnBu', annot=False, yticklabels=1, cbar_kws={'label': 'Dutiable Value (PHP)'})
     
     # add titles and labels
     plt.title('Heatmap of Total Dutiable Value (PHP) by Country and TQ')
-    plt.xlabel('Treatment Qualifier (TQ)')
+    plt.xlabel('Reporting Quarter (TQ)')
     plt.ylabel('Country of Origin (ISO3)')
     
     plt.tight_layout()
